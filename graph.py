@@ -153,15 +153,16 @@ class GraphEx(Graph):
                     raise GraphExInputError('Оператор exp принимает только один аргумент')
                 return math.exp(expr_values[0])
 
-        def compute_rec(substr: str):
-            if '(' not in substr:
-                return int(substr)
-            rec_op = substr[:substr.find('(')]
-            rec_values = substr[substr.find('(') + 1: -1].split(',')
-            rec_values = [compute_rec(v) for v in rec_values]
-            return compute_expr(rec_op, rec_values)
+        def rec(b):
+            nonlocal marks
+            if b not in self.backward:
+                return int(marks[b])
+            rec_values = [rec(a) for (n, a) in self.backward[b]]
+            return compute_expr(marks[b], rec_values)
 
-        return compute_rec(value)
+        self.assert_cycle()
+        sinks = self.get_sinks()
+        return rec(sinks[0])
 
 
 def main():
