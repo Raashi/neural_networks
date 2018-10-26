@@ -45,6 +45,38 @@ class Graph:
         self.sort()
         return self.backward
 
+    def _read(self, line):
+        last_rbracket = -1
+        idx_bracket = 0
+        while line.find('(', last_rbracket + 1) != -1:
+            try:
+                lbracket = line.find('(', last_rbracket + 1)
+                rbracket = line.find(')', last_rbracket + 1)
+                if rbracket < 0:
+                    raise GraphInputError('Не найдена закрывающая скобка. Последняя открывающая {}'.find(lbracket))
+                idx_bracket += 1
+                last_rbracket = rbracket
+                line_edge = line[lbracket + 1: rbracket]
+                self._read_edge(line_edge)
+            except GraphInputError as e:
+                raise GraphInputError('Ошибка в скобке {}'.format(idx_bracket)) from e
+        if last_rbracket + 1 < len(line):
+            raise GraphInputError('Ошибка при считывании - конец строки')
+
+    def _read_edge(self, line_edge):
+        values = line_edge.split(',')
+        if len(values) < 3:
+            raise GraphInputError('Неверный формат строки входного файла')
+
+        a, b = values[0], values[1]
+        try:
+            n = int(values[2])
+        except ValueError:
+            raise GraphInputError('Неверный формат номера дуги: должно быть целым числом')
+        self.add_edge(a, b, n)
+
+
+class GraphEx(Graph):
     def get_sources(self):
         return list({a for b, blist in self.backward.items() for (n, a) in blist if a not in self.backward})
 
@@ -83,47 +115,24 @@ class Graph:
             raise GraphInputError('Функция от графа определена только для графов с одним стоком')
         return rec(sinks[0])
 
-    def _read(self, line):
-        last_rbracket = -1
-        idx_bracket = 0
-        while line.find('(', last_rbracket + 1) != -1:
-            try:
-                lbracket = line.find('(', last_rbracket + 1)
-                rbracket = line.find(')', last_rbracket + 1)
-                if rbracket < 0:
-                    raise GraphInputError('Не найдена закрывающая скобка. Последняя открывающая {}'.find(lbracket))
-                idx_bracket += 1
-                last_rbracket = rbracket
-                line_edge = line[lbracket + 1: rbracket]
-                self._read_edge(line_edge)
-            except GraphInputError as e:
-                raise GraphInputError('Ошибка в скобке {}'.format(idx_bracket)) from e
-        if last_rbracket + 1 < len(line):
-            raise GraphInputError('Ошибка при считывании - конец строки')
-
-    def _read_edge(self, line_edge):
-        values = line_edge.split(',')
-        if len(values) < 3:
-            raise GraphInputError('Неверный формат строки входного файла')
-
-        a, b = values[0], values[1]
-        try:
-            n = int(values[2])
-        except ValueError:
-            raise GraphInputError('Неверный формат номера дуги: должно быть целым числом')
-        self.add_edge(a, b, n)
-
 
 def main():
-    filename = FILENAME_INPUT_DEFAULT if len(sys.argv) < 2 else sys.argv[1]
+    operation = sys.argv[1]
+    file_graph = FILENAME_INPUT_DEFAULT if len(sys.argv) < 3 else sys.argv[2]
 
-    with open(filename) as fgraph:
-        graph = Graph(fgraph)
-    value = graph.function()
-    print(value)
-
-    with open(FILENAME_OUTPUT_DEFAULT, 'w') as fgraph:
-        json.dump(graph.serialize(), fgraph, indent=4, sort_keys=True)
+    if operation == '-parse':
+        with open(file_graph) as f:
+            graph = Graph(f)
+        with open(FILENAME_OUTPUT_DEFAULT, 'w') as f:
+            json.dump(graph.serialize(), f, indent=4, sort_keys=True)
+    elif operation == '-func':
+        with open(file_graph) as f:
+            graph = GraphEx(f)
+        print(graph.function())
+    elif operation == '-comp':
+        pass
+    else:
+        print('Неверный параметр операции')
 
 
 if __name__ == '__main__':
