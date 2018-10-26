@@ -1,8 +1,12 @@
 import sys
 import json
+import math
+import operator
+import functools
 
 
 FILENAME_INPUT_DEFAULT = '.\\tests\\graph.txt'
+FILENAME_MARKS_DEFAULT = '.\\tests\\graph_marks.txt'
 FILENAME_OUTPUT_DEFAULT = 'graph_serialized.json'
 
 
@@ -76,6 +80,10 @@ class Graph:
         self.add_edge(a, b, n)
 
 
+class GraphExInputError(ValueError):
+    pass
+
+
 class GraphEx(Graph):
     def get_sources(self):
         return list({a for b, blist in self.backward.items() for (n, a) in blist if a not in self.backward})
@@ -100,7 +108,7 @@ class GraphEx(Graph):
         for source in sources:
             rec([source])
 
-    def function(self):
+    def function(self) -> str:
         def rec(b):
             rec_value = b + '('
             if b not in self.backward:
@@ -114,6 +122,46 @@ class GraphEx(Graph):
         if len(sinks) > 1:
             raise GraphInputError('Функция от графа определена только для графов с одним стоком')
         return rec(sinks[0])
+
+    @staticmethod
+    def read_marks(fp):
+        marks = {}
+        for line in fp:
+            vertex, op = line.strip().replace(' ', '').split(':')
+            marks[vertex] = op
+        return marks
+
+    def compute(self, marks: dict):
+        if set(marks.keys()) != self.vertices:
+            raise GraphExInputError('Операторы/значения переданы не для всех вершин')
+
+        value = self.function()
+        for mark, op in marks.items():
+            value = value.replace(mark, op)
+
+        def compute_expr(expr_op, expr_values):
+            if expr_op == '+':
+                if not len(expr_values):
+                    raise GraphExInputError('Оператор + принимает ненулевое число аргументов')
+                return functools.reduce(operator.add, expr_values)
+            elif expr_op == '*':
+                if not len(expr_values):
+                    raise GraphExInputError('Оператор * принимает ненулевое число аргументов')
+                return functools.reduce(operator.mul, expr_values)
+            elif expr_op == 'exp':
+                if len(expr_values) != 1:
+                    raise GraphExInputError('Оператор exp принимает только один аргумент')
+                return math.exp(expr_values[0])
+
+        def compute_rec(substr: str):
+            if '(' not in substr:
+                return int(substr)
+            rec_op = substr[:substr.find('(')]
+            rec_values = substr[substr.find('(') + 1: -1].split(',')
+            rec_values = [compute_rec(v) for v in rec_values]
+            return compute_expr(rec_op, rec_values)
+
+        return compute_rec(value)
 
 
 def main():
@@ -130,7 +178,12 @@ def main():
             graph = GraphEx(f)
         print(graph.function())
     elif operation == '-comp':
-        pass
+        with open(file_graph) as f:
+            graph = GraphEx(f)
+        file_marks = FILENAME_MARKS_DEFAULT if len(sys.argv) < 4 else sys.argv[3]
+        with open(file_marks) as f:
+            marks = GraphEx.read_marks(f)
+        print(graph.compute(marks))
     else:
         print('Неверный параметр операции')
 
