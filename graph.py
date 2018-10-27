@@ -43,6 +43,9 @@ class Graph:
 
     def sort(self):
         for b, edge in self.backward.items():
+            marks = list(map(lambda e: e[0], edge))
+            if min(marks) != 1 or max(marks) != len(marks) or not all(isinstance(el[0], int) for el in edge):
+                raise GraphInputError('Вершина {}: метки ребер должны составлять последовательность 1, 2, 3, ..., deg(b)-1'.format(b))
             edge.sort(key=lambda e: e[0])
 
     def serialize(self):
