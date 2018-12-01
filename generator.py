@@ -8,14 +8,23 @@ DEFAULT_X_MIN = 1
 DEFAULT_X_MAX = 100
 
 
-def generate(layer_count, neuron_min, neuron_max):
-    print('Нейронная сеть будет иметь {} слоев'.format(layer_count))
+def main():
+    if '-l' in sys.argv:
+        layers_sizes = list(map(int, sys.argv[sys.argv.index('-l') + 1:]))
+        x_size = layers_sizes[0]
+        layers_sizes = layers_sizes[1:]
+        layer_count = len(layers_sizes)
+    else:
+        layer_count = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_LAYER_COUNT
+        neuron_min = int(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_LAYER_NEURON_COUNT_MIN
+        neuron_max = int(sys.argv[3]) if len(sys.argv) > 3 else DEFAULT_LAYER_NEURON_COUNT_MAX
 
-    layers_sizes = [random.randint(neuron_min, neuron_max) for _idx in range(layer_count)]
+        print('Нейронная сеть будет иметь {} слоев'.format(layer_count))
+        layers_sizes = [random.randint(neuron_min, neuron_max) for _idx in range(layer_count)]
+        x_size = random.randint(neuron_min, neuron_max)
+
     print('Количество нейронов в слоях (от 1 до {})'.format(layer_count))
     print(str(layers_sizes)[1:-1])
-
-    x_size = random.randint(neuron_min, neuron_max)
     print('Размерность входного вектора равна {}'.format(x_size))
     y_size = layers_sizes[-1]
     print('Размерность выходного вектора равна {}'.format(y_size))
@@ -38,18 +47,6 @@ def generate(layer_count, neuron_min, neuron_max):
         for mat in mats:
             for row in mat:
                 f.write(', '.join(map(str, row)) + '\n')
-
-    x = [random.randint(DEFAULT_X_MIN, DEFAULT_X_MAX) for _idx in range(x_size)]
-    print('Входной вектор:', ', '.join(map(str, x)))
-    with open('tests/x.txt', 'w') as f:
-        f.write(', '.join(map(str, x)))
-
-
-def main():
-    layer_count = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_LAYER_COUNT
-    neuron_min = int(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_LAYER_NEURON_COUNT_MIN
-    neuron_max = int(sys.argv[3]) if len(sys.argv) > 3 else DEFAULT_LAYER_NEURON_COUNT_MAX
-    generate(layer_count, neuron_min, neuron_max)
 
 
 if __name__ == '__main__':
