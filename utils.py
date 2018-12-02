@@ -1,6 +1,6 @@
 import sys
 import json
-from decimal import getcontext, Decimal
+from decimal import getcontext, Decimal, InvalidOperation
 
 PRECISION = 3
 getcontext().prec = PRECISION
@@ -45,22 +45,40 @@ class Printer:
     @staticmethod
     def net_computation_start(x):
         if PRINT_DEBUG:
-            print('-' * SEPARATOR_LEN + ' ВЫЧИСЛЕНИЕ ' + '-' * SEPARATOR_LEN, end='\n\n')
+            print('-' * SEPARATOR_LEN + ' ВЫЧИСЛЕНИЕ ' + '-' * SEPARATOR_LEN)
+            print('Входной вектор x = ({})'.format(arr_str_decimal(x)), end='\n\n')
 
     @staticmethod
     def net_computation_end(y):
         if PRINT_DEBUG:
+            print('Результат вычислений y = ({})'.format(arr_str_decimal(y)))
             print('-' * SEPARATOR_LEN + ' КОНЕЦ ВЫЧИСЛЕНИЙ ' + '-' * SEPARATOR_LEN)
 
 
-def parse_line(line):
-    return list(map(int, line.replace(' ', '').split(','))) if line.strip() else []
+def try_parse_int(line):
+    try:
+        v = Decimal(line)
+    except InvalidOperation:
+        raise NeuronNetworkParseError('Невозможно распознать строковое число {}'.format(line))
+    return v
+
+
+def parse_line(ll):
+    line_num, line = ll
+    if not line.strip():
+        return []
+    numbers = line.replace(' ', '').split(',')
+    try:
+        numbers = list(map(try_parse_int, numbers))
+    except NeuronNetworkParseError as e:
+        raise NeuronNetworkParseError('Ошибка в строке данных {}'.format(line_num + 1)) from e
+    return numbers
 
 
 def parse_txt(filename):
     with open(filename) as f:
         lines = f.readlines()
-    lines = list(map(parse_line, lines))
+    lines = list(map(parse_line, enumerate(lines)))
 
     idx = 0
     mats = []
@@ -68,6 +86,8 @@ def parse_txt(filename):
         mat = [lines[idx]]
         idx += 1
         while lines[idx]:
+            if len(lines[idx]) != len(mat[0]):
+                raise NeuronNetworkParseError('Неверное число элементов матрицы в строке {}'.format(idx + 1))
             mat.append(lines[idx])
             idx += 1
         mats.append(mat)
@@ -84,4 +104,8 @@ def parse_json(filename):
 def parse_x(filename):
     with open(filename) as f:
         line = f.read()
-    return list(map(Decimal, line.replace(' ', '').split(',')))
+    try:
+        x = list(map(try_parse_int, line.replace(' ', '').split(',')))
+    except NeuronNetworkParseError as e:
+        raise NeuronNetworkParseError('Ошибка в формате входного вектора') from e
+    return x
