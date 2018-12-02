@@ -47,6 +47,7 @@ def main():
         for mat in mats:
             for row in mat:
                 f.write(', '.join(map(str, row)) + '\n')
+            f.write('\n')
 
 
 if __name__ == '__main__':

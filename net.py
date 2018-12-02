@@ -1,15 +1,14 @@
-import sys
-import json
-import math
 from operator import add
 from functools import reduce
 
+from utils import *
 
-ACTIVATION_ALPHA = 0.2
+
+ACTIVATION_ALPHA = Decimal(5)
 
 
 def func_activate(x):
-    return 1 / (1 + math.exp(-ACTIVATION_ALPHA * x))
+    return Decimal(2) / (Decimal(1) + (-ACTIVATION_ALPHA * x).exp()) - Decimal(1)
 
 
 class Neuron:
@@ -18,9 +17,9 @@ class Neuron:
         self.weights = weights
 
     def compute(self, x):
-        res = func_activate(reduce(add, map(lambda xw: xw[0] * xw[1], zip(x, self.weights))))
-        print('\t\tРезультат нейрона:', res)
-        return res
+        y = func_activate(reduce(add, map(lambda xw: xw[0] * xw[1], zip(x, self.weights))))
+        Printer.neuron_computation(x, self.weights, y)
+        return y
 
 
 class Layer:
@@ -30,9 +29,10 @@ class Layer:
         self.neurons = [Neuron(list(map(lambda idx: mat[idx][neur], range(len(mat))))) for neur in range(len(mat[0]))]
 
     def compute(self, x):
-        res = [neuron.compute(x) for neuron in self.neurons]
-        print('\tРезультат слоя:', res)
-        return res
+        Printer.layer_computation_start(x)
+        y = [neuron.compute(x) for neuron in self.neurons]
+        Printer.layer_computation_end(y)
+        return y
 
 
 class Network:
@@ -44,14 +44,15 @@ class Network:
             self.ins = len(mats[0])
             self.outs = len(mats[-1][0])
         else:
-            raise ValueError('Wrong mats parameter type')
+            raise TypeError('Неверный тип аргумента в конструкторе Network')
 
     def compute(self, x):
-        print('Входной вектор:', x)
+        Printer.net_computation_start(x)
         if len(x) != self.ins:
             raise ValueError('Неверная размерность входного вектора. Должна быть {}'.format(self.ins))
-        for layer in self.layers:
+        for idx, layer in enumerate(self.layers):
             x = layer.compute(x)
+        Printer.net_computation_end(x)
         return x
 
     def to_json(self):
@@ -82,41 +83,8 @@ class Network:
             mat = [[0] * layer_obj['outs'] for _i in range(layer_obj['ins'])]
             for neuron_idx, neuron_obj in enumerate(layer_obj['neurons']):
                 for idx, w in enumerate(neuron_obj['weights']):
-                    mat[idx][neuron_idx] = w
+                    mat[idx][neuron_idx] = Decimal(str(w))
             self.layers.append(Layer(mat))
-
-
-def parse_line(line):
-    return list(map(int, line.replace(' ', '').split(',')))
-
-
-def parse_txt(filename):
-    with open(filename) as f:
-        lines = f.readlines()
-    lines = list(map(parse_line, lines))
-
-    idx = 0
-    mats = []
-    while idx < len(lines) and lines[idx]:
-        mat = [lines[idx]]
-        idx += 1
-        while idx < len(lines) and len(lines[idx]) == len(mat[0]):
-            mat.append(lines[idx])
-            idx += 1
-        mats.append(mat)
-    return mats
-
-
-def parse_json(filename):
-    with open(filename) as f:
-        content = f.read()
-    return json.loads(content)
-
-
-def parse_x(filename):
-    with open(filename) as f:
-        line = f.read()
-    return list(map(float, line.replace(' ', '').split(',')))
 
 
 def main():
@@ -125,9 +93,11 @@ def main():
         with open('nn.json', 'w') as f:
             json.dump(net.to_json(), f, indent=4)
     elif sys.argv[1] == '-c':
+        x = parse_x(sys.argv[3])
+        print('Входной вектор x = ({})'.format(arr_str_decimal(x)))
         net = Network(parse_json(sys.argv[2]))
-        y = net.compute(parse_x(sys.argv[3]))
-        print('Результат вычислений y =', y)
+        y = net.compute(x)
+        print('Результат вычислений y = ({})'.format(arr_str_decimal(y)))
 
 
 if __name__ == '__main__':
