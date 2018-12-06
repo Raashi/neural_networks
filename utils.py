@@ -10,16 +10,21 @@ PRINT_DEBUG = '-v' in sys.argv or '-vv' in sys.argv
 PRINT_DEBUG_FULL = '-vv' in sys.argv
 
 
+def create_decimal(arg):
+    res = Decimal_Orig(arg) * Decimal_Orig(1)
+    return res
+
+
+Decimal_Orig = Decimal
+Decimal = create_decimal
+
+
 class NeuronNetworkParseError(ValueError):
     pass
 
 
-def str_decimal(dec):
-    return str((float(dec)))
-
-
 def arr_str_decimal(arr_dec):
-    return ', '.join(map(str_decimal, arr_dec))
+    return ', '.join(map(str, arr_dec))
 
 
 class Printer:
@@ -109,3 +114,23 @@ def parse_x(filename):
     except NeuronNetworkParseError as e:
         raise NeuronNetworkParseError('Ошибка в формате входного вектора') from e
     return x
+
+
+def parse_xy(filename):
+    with open(filename) as f:
+        lines = f.readlines()
+
+    xy = []
+    for idx, line in enumerate(lines):
+        if '->' not in line:
+            raise NeuronNetworkParseError('Ошибка в формате обучающей выборки, строка {}'.format(idx))
+        try:
+            posl, posr = line.find('['), line.find(']')
+            x = eval(line[posl:posr + 1])
+            posl, posr = line.rfind('['), line.rfind(']')
+            y = eval(line[posl: posr + 1])
+            xy.append(([Decimal(xi) for xi in x], [Decimal(yi) for yi in y]))
+        except InvalidOperation as e:
+            raise NeuronNetworkParseError('Ошибка в формате обучающей выборки, строка {}'.format(idx)) from e
+
+    return xy

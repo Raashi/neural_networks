@@ -55,6 +55,10 @@ class Network:
         Printer.net_computation_end(x)
         return x
 
+    def train(self, xy):
+        if len(xy[0][0]) != self.ins:
+            raise ValueError()
+
     def to_json(self):
         obj = {
             'ins': self.ins,

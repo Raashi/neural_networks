@@ -1,5 +1,6 @@
 import sys
 import random
+from utils import Decimal, arr_str_decimal
 
 DEFAULT_LAYER_COUNT = 3
 DEFAULT_LAYER_NEURON_COUNT_MIN = 2
@@ -7,8 +8,33 @@ DEFAULT_LAYER_NEURON_COUNT_MAX = 5
 DEFAULT_X_MIN = 1
 DEFAULT_X_MAX = 100
 
+X_MIN = -1000
+X_MAX = 1000
 
-def main():
+
+def get_random():
+    return Decimal(random.uniform(X_MIN, X_MAX))
+
+
+def func_1(count):
+    xy = []
+    for _idx in range(count):
+        x = [get_random(), get_random()]
+        y = [Decimal(0.25) if x[0] > 0 and x[1] > 0 else
+             Decimal(0.5) if x[0] < 0 < x[1] else
+             Decimal(0.75) if x[0] < 0 and x[1] < 0 else
+             Decimal(1)]
+        xy.append((x, y))
+    for _idx in range(count // 16):
+        xy.append(([get_random(), 0], [0]))
+    for _idx in range(count // 16):
+        xy.append(([0, get_random()], [0]))
+    xy.append(([0, 0], [0]))
+    random.shuffle(xy)
+    return xy
+
+
+def gen_net():
     if '-l' in sys.argv:
         layers_sizes = list(map(int, sys.argv[sys.argv.index('-l') + 1:]))
         x_size = layers_sizes[0]
@@ -48,6 +74,20 @@ def main():
             for row in mat:
                 f.write(', '.join(map(str, row)) + '\n')
             f.write('\n')
+
+
+def main():
+    if '-xy' in sys.argv:
+        func_name = sys.argv[2]
+        filename = sys.argv[3] if len(sys.argv) > 3 else 'xy.txt'
+        count = int(sys.argv[3]) if len(sys.argv) > 3 else 100
+        xy = globals()['func_' + func_name](count)
+        with open(filename, 'w') as f:
+            for xi, yi in xy:
+                f.write('[{}] -> [{}]\n'.format(arr_str_decimal(xi), arr_str_decimal(yi)))
+
+    else:
+        gen_net()
 
 
 if __name__ == '__main__':
