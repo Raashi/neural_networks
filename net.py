@@ -1,19 +1,18 @@
+from math import exp
 from utils import *
-use_decimal(False)
 
 DEFAULT_TRAIN_ITERATIONS = 1
 
-ACTIVATION_ALPHA = Decimal(1)
-TETTA = Decimal(0.5)
+ACTIVATION_ALPHA = 5
+TETTA = 0.5
 
 
 def func_activate(x):
-    return Decimal(2) / (Decimal(1) + exp(-ACTIVATION_ALPHA * x)) - Decimal(1)
+    return 2 / (1 + exp(-ACTIVATION_ALPHA * x)) - 1
 
 
 def derivative_func_activate(x):
-    # return Decimal(0.5) * (Decimal(1) + func_activate(x)) * (Decimal(1) - func_activate(x))
-    return Decimal(2) * ACTIVATION_ALPHA * exp(-ACTIVATION_ALPHA * x) / ((1 + exp(-ACTIVATION_ALPHA * x)) ** 2)
+    return 2 * ACTIVATION_ALPHA * exp(-ACTIVATION_ALPHA * x) / ((1 + exp(-ACTIVATION_ALPHA * x)) ** 2)
 
 
 class Neuron:
@@ -110,7 +109,7 @@ class Network:
                         s[-1].append(reduce(add, map(lambda i: y[-2][i] * wk[i][j], range(len(wk)))))
                         y[-1].append(func_activate(s[-1][-1]))
 
-                dw = Decimal(0.5) * reduce(add, map(lambda yd: (yd[0] - yd[1]) ** 2, zip(y[-1], di)))
+                dw = 0.5 * reduce(add, map(lambda yd: (yd[0] - yd[1]) ** 2, zip(y[-1], di)))
                 # print('Ошибка равна {}'.format(dw))
 
                 y = y[1:]
@@ -132,7 +131,7 @@ class Network:
                             for i in range(outs_next):
                                 delta += deltas[0][i] * w[layer_num + 1][j][i]
                             delta *= derivative_func_activate(sk[j])
-                            print("{:.3f}".format(delta))
+                            # print("{:.3f}".format(delta))
                             deltas_new.append(delta)
                         deltas.insert(0, deltas_new)
 
@@ -140,7 +139,7 @@ class Network:
                     for i in range(ins):
                         for j in range(outs):
                             delt = -TETTA * deltas[0][j] * y_last[i]
-                            # print(delt)
+                            # print('{:.3f}'.format(delt))
                             wk[i][j] += delt
                             wk[i][j] = max(min(100, wk[i][j]), -100)
             self.from_mats(w)
@@ -161,7 +160,7 @@ class Network:
             for neuron in layer.neurons:
                 layer_obj['neurons'].append({
                     'ins': neuron.ins,
-                    'weights': list(map(str, neuron.weights))
+                    'weights': list(map(float_str, neuron.weights))
                 })
         return obj
 
@@ -173,7 +172,7 @@ class Network:
             mat = [[0] * layer_obj['outs'] for _i in range(layer_obj['ins'])]
             for neuron_idx, neuron_obj in enumerate(layer_obj['neurons']):
                 for idx, w in enumerate(neuron_obj['weights']):
-                    mat[idx][neuron_idx] = Decimal(str(w))
+                    mat[idx][neuron_idx] = float(w)
             self.layers.append(Layer(mat))
 
 
@@ -185,9 +184,9 @@ def main():
     elif sys.argv[1] == '-c':
         net = Network(parse_json(sys.argv[2]))
         x = parse_x(sys.argv[3])
-        print('Входной вектор x = ({})'.format(arr_str_decimal(x)))
+        print('Входной вектор x = ({})'.format(float_arr_str(x)))
         y = net.compute(x)
-        print('Результат вычислений y = ({})'.format(arr_str_decimal(y)))
+        print('Результат вычислений y = ({})'.format(float_arr_str(y)))
     elif sys.argv[1] == '-t':
         net = Network(parse_json(sys.argv[2]))
         xy = parse_xy(sys.argv[3])

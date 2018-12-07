@@ -4,44 +4,23 @@ import math
 import decimal
 from operator import add
 from functools import reduce
-from decimal import getcontext, Decimal, InvalidOperation
-
-PRECISION = 3
-getcontext().prec = PRECISION
 
 SEPARATOR_LEN = 30
 PRINT_DEBUG = '-v' in sys.argv or '-vv' in sys.argv
 PRINT_DEBUG_FULL = '-vv' in sys.argv
 
 
-def create_decimal(arg):
-    return Decimal_Orig(arg) * Decimal_Orig(1) if _USE_DECIMAL else float(arg)
-
-
-def use_decimal(arg: bool):
-    global _USE_DECIMAL
-    _USE_DECIMAL = arg
-
-
-_USE_DECIMAL = True
-Decimal_Orig = Decimal
-Decimal = create_decimal
-
-
-def exp(arg):
-    if isinstance(arg, decimal.Decimal):
-        return arg.exp()
-    else:
-        return math.exp(arg)
-
-
 def normalized(vec):
-    d = reduce(add, map(lambda x: x ** Decimal(2), vec)) ** Decimal(0.5)
+    d = reduce(add, map(lambda x: x ** 2, vec)) ** 0.5
     return [vi / d for vi in vec]
 
 
-def arr_str_decimal(arr_dec):
-    return ', '.join(map(str, arr_dec))
+def float_str(f):
+    return '{:.3f}'.format(f)
+
+
+def float_arr_str(arr):
+    return ', '.join(map(float_str, arr))
 
 
 class NeuronNetworkParseError(ValueError):
@@ -52,32 +31,32 @@ class Printer:
     @staticmethod
     def neuron_computation(x, w, y):
         if PRINT_DEBUG_FULL:
-            print_res = 'Результат нейрона: {}'.format(y)
-            print_comp = ' + '.join(['{} * {}'.format(xi, wi) for xi, wi in zip(x, w)])
+            print_res = 'Результат нейрона: {}'.format(float_str(y))
+            print_comp = ' + '.join(['{} * {}'.format(float_str(xi), float_str(wi)) for xi, wi in zip(x, w)])
             print('        {:<28} Подробно: ({})'.format(print_res, print_comp))
         elif PRINT_DEBUG:
-            print('        Результат нейрона:', y)
+            print('        Результат нейрона:', float_str(y))
 
     @staticmethod
     def layer_computation_start(x):
         if PRINT_DEBUG:
-            print('    Вход слоя: ({})'.format(arr_str_decimal(x)))
+            print('    Вход слоя: ({})'.format(float_arr_str(x)))
 
     @staticmethod
     def layer_computation_end(y):
         if PRINT_DEBUG:
-            print('    Результат слоя: ({})\n'.format(arr_str_decimal(y)))
+            print('    Результат слоя: ({})\n'.format(float_arr_str(y)))
 
     @staticmethod
     def net_computation_start(x):
         if PRINT_DEBUG:
             print('-' * SEPARATOR_LEN + ' ВЫЧИСЛЕНИЕ ' + '-' * SEPARATOR_LEN)
-            print('Входной вектор x = ({})'.format(arr_str_decimal(x)), end='\n\n')
+            print('Входной вектор x = ({})'.format(float_arr_str(x)), end='\n\n')
 
     @staticmethod
     def net_computation_end(y):
         if PRINT_DEBUG:
-            print('Результат вычислений y = ({})'.format(arr_str_decimal(y)))
+            print('Результат вычислений y = ({})'.format(float_arr_str(y)))
             print('-' * SEPARATOR_LEN + ' КОНЕЦ ВЫЧИСЛЕНИЙ ' + '-' * SEPARATOR_LEN)
 
     @staticmethod
@@ -95,9 +74,9 @@ class Printer:
 
 def try_parse_int(line):
     try:
-        v = Decimal(line)
-    except InvalidOperation:
-        raise NeuronNetworkParseError('Невозможно распознать строковое число {}'.format(line))
+        v = float(line)
+    except ValueError as e:
+        raise NeuronNetworkParseError('Невозможно распознать строковое число {}'.format(line)) from e
     return v
 
 
@@ -162,8 +141,7 @@ def parse_xy(filename):
             x = eval(line[posl:posr + 1])
             posl, posr = line.rfind('['), line.rfind(']')
             y = eval(line[posl: posr + 1])
-            xy.append(([Decimal(xi) for xi in x], [Decimal(yi) for yi in y]))
-        except InvalidOperation as e:
+            xy.append(([float(xi) for xi in x], [float(yi) for yi in y]))
+        except ValueError as e:
             raise NeuronNetworkParseError('Ошибка в формате обучающей выборки, строка {}'.format(idx)) from e
-
     return xy
