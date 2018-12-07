@@ -78,7 +78,7 @@ def gen_net():
         mats.append(mat)
     print('Матрицы сгенерированы')
 
-    with open('tests/nn.txt', 'w') as f:
+    with open('nn.txt', 'w') as f:
         for mat in mats:
             for row in mat:
                 f.write(', '.join(map(str, row)) + '\n')

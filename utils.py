@@ -1,5 +1,7 @@
 import sys
 import json
+import math
+import decimal
 from decimal import getcontext, Decimal, InvalidOperation
 
 PRECISION = 3
@@ -11,20 +13,32 @@ PRINT_DEBUG_FULL = '-vv' in sys.argv
 
 
 def create_decimal(arg):
-    res = Decimal_Orig(arg) * Decimal_Orig(1)
-    return float(arg)
+    return Decimal_Orig(arg) * Decimal_Orig(1) if _USE_DECIMAL else float(arg)
 
 
+def use_decimal(arg: bool):
+    global _USE_DECIMAL
+    _USE_DECIMAL = arg
+
+
+_USE_DECIMAL = True
 Decimal_Orig = Decimal
 Decimal = create_decimal
 
 
-class NeuronNetworkParseError(ValueError):
-    pass
+def exp(arg):
+    if isinstance(arg, decimal.Decimal):
+        return arg.exp()
+    else:
+        return math.exp(arg)
 
 
 def arr_str_decimal(arr_dec):
     return ', '.join(map(str, arr_dec))
+
+
+class NeuronNetworkParseError(ValueError):
+    pass
 
 
 class Printer:

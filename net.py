@@ -1,9 +1,8 @@
-import decimal
-from math import exp
 from operator import add
 from functools import reduce
 
 from utils import *
+use_decimal(False)
 
 DEFAULT_TRAIN_ITERATIONS = 1
 
@@ -12,18 +11,11 @@ TETTA = Decimal(0.1)
 
 
 def func_activate(x):
-    if isinstance(x, decimal.Decimal):
-        return Decimal(2) / (Decimal(1) + (-ACTIVATION_ALPHA * x).exp()) - Decimal(1)
-    else:
-        return 2 / (1 + exp(-float(ACTIVATION_ALPHA) * x)) - 1
+    return Decimal(2) / (Decimal(1) + exp(-ACTIVATION_ALPHA * x)) - Decimal(1)
 
 
 def derivative_func_activate(x):
-    if isinstance(x, decimal.Decimal):
-        res = Decimal(0.5) * (Decimal(1) + func_activate(x)) * (Decimal(1) - func_activate(x))
-    else:
-        res = 0.5 + (1 * func_activate(x)) * (1 - func_activate(x))
-    return res
+    return Decimal(0.5) * (Decimal(1) + func_activate(x)) * (Decimal(1) - func_activate(x))
 
 
 class Neuron:
@@ -116,7 +108,7 @@ class Network:
                         s[-1].append(reduce(add, map(lambda i: y[-2][i] * wk[i][j], range(len(wk)))))
                         y[-1].append(func_activate(s[-1][-1]))
 
-                dw = 0.5 * reduce(add, map(lambda yd: (yd[0] - yd[1]) ** 2, zip(y[-1], di)))
+                dw = Decimal(0.5) * reduce(add, map(lambda yd: (yd[0] - yd[1]) ** 2, zip(y[-1], di)))
                 # print('Ошибка равна {}\n'.format(dw))
 
                 y = y[1:]
@@ -189,9 +181,9 @@ def main():
         with open('nn.json', 'w') as f:
             json.dump(net.to_json(), f, indent=2)
     elif sys.argv[1] == '-c':
+        net = Network(parse_json(sys.argv[2]))
         x = parse_x(sys.argv[3])
         print('Входной вектор x = ({})'.format(arr_str_decimal(x)))
-        net = Network(parse_json(sys.argv[2]))
         y = net.compute(x)
         print('Результат вычислений y = ({})'.format(arr_str_decimal(y)))
     elif sys.argv[1] == '-t':
