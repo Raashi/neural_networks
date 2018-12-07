@@ -2,6 +2,8 @@ import sys
 import json
 import math
 import decimal
+from operator import add
+from functools import reduce
 from decimal import getcontext, Decimal, InvalidOperation
 
 PRECISION = 3
@@ -31,6 +33,11 @@ def exp(arg):
         return arg.exp()
     else:
         return math.exp(arg)
+
+
+def normalized(vec):
+    d = reduce(add, map(lambda x: x ** Decimal(2), vec)) ** Decimal(0.5)
+    return [vi / d for vi in vec]
 
 
 def arr_str_decimal(arr_dec):
@@ -72,6 +79,18 @@ class Printer:
         if PRINT_DEBUG:
             print('Результат вычислений y = ({})'.format(arr_str_decimal(y)))
             print('-' * SEPARATOR_LEN + ' КОНЕЦ ВЫЧИСЛЕНИЙ ' + '-' * SEPARATOR_LEN)
+
+    @staticmethod
+    def train_25_rule(xy_len, w_count):
+        if xy_len < 2 * w_count:
+            print('ПРЕДУПРЕЖДЕНИЕ: нарушение правила 2-5: обучающая выбора слишком мала')
+            print('ПРЕДУПРЕЖДЕНИЕ: минимальный объем выборки должен быть {}'.format(2 * w_count))
+        elif 5 * w_count < xy_len:
+            print('ПРЕДУПРЕЖДЕНИЕ: нарушение правила 2-5: обучающая выборка слишком велика')
+            print('ПРЕДУПРЕЖДЕНИЕ: максимальный объем выборки должен быть {}'.format(5 * w_count))
+        else:
+            raise ValueError('Неверный вызов принта предупреждения нарушения правила 2-5')
+        print('ПРЕДУПРЕЖДЕНИЕ: объем выборки: {}; количество параметров: {};'.format(xy_len, w_count))
 
 
 def try_parse_int(line):

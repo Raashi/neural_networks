@@ -8,12 +8,19 @@ DEFAULT_LAYER_NEURON_COUNT_MAX = 5
 DEFAULT_X_MIN = 1
 DEFAULT_X_MAX = 100
 
-X_MIN = -1
-X_MAX = 1
+X_MIN = -100
+X_MAX = 100
+
+W_MIN = -3
+W_MAX = 3
 
 
 def get_random():
     return Decimal(random.uniform(X_MIN, X_MAX))
+
+
+def get_random_weight():
+    return random.randint(W_MIN, W_MAX)
 
 
 def func_1(count):
@@ -66,15 +73,7 @@ def gen_net():
 
     mats = []
     for last_layer_size, next_layer_size in zip([x_size] + layers_sizes[:-1], layers_sizes):
-        mat = [[0 for _j in range(next_layer_size)] for _i in range(last_layer_size)]
-
-        for neuron_next in range(next_layer_size):
-            weights = [neuron + 1 for neuron in range(last_layer_size)]
-            random.shuffle(weights)
-
-            for last_layer_neuron, weight in enumerate(weights):
-                mat[last_layer_neuron][neuron_next] = weight
-
+        mat = [[get_random_weight() for _j in range(next_layer_size)] for _i in range(last_layer_size)]
         mats.append(mat)
     print('Матрицы сгенерированы')
 
@@ -88,8 +87,8 @@ def gen_net():
 def main():
     if '-xy' in sys.argv:
         func_name = sys.argv[2]
-        filename = sys.argv[3] if len(sys.argv) > 3 else 'xy.txt'
         count = int(sys.argv[3]) if len(sys.argv) > 3 else 100
+        filename = sys.argv[4] if len(sys.argv) > 4 else 'xy.txt'
         xy = globals()['func_' + func_name](count)
         with open(filename, 'w') as f:
             for xi, yi in xy:

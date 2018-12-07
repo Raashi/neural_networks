@@ -1,13 +1,10 @@
-from operator import add
-from functools import reduce
-
 from utils import *
 use_decimal(False)
 
 DEFAULT_TRAIN_ITERATIONS = 1
 
 ACTIVATION_ALPHA = Decimal(1)
-TETTA = Decimal(0.1)
+TETTA = Decimal(0.5)
 
 
 def func_activate(x):
@@ -15,7 +12,8 @@ def func_activate(x):
 
 
 def derivative_func_activate(x):
-    return Decimal(0.5) * (Decimal(1) + func_activate(x)) * (Decimal(1) - func_activate(x))
+    # return Decimal(0.5) * (Decimal(1) + func_activate(x)) * (Decimal(1) - func_activate(x))
+    return Decimal(2) * ACTIVATION_ALPHA * exp(-ACTIVATION_ALPHA * x) / ((1 + exp(-ACTIVATION_ALPHA * x)) ** 2)
 
 
 class Neuron:
@@ -94,6 +92,10 @@ class Network:
             raise ValueError('Неверная размерность выходного вектора обучающей выборки. '
                              'Должна быть {}'.format(self.outs))
 
+        w_count = reduce(add, map(lambda layer: layer.outs, self.layers))
+        if not (2 * w_count <= len(xd) <= 5 * w_count):
+            Printer.train_25_rule(len(xd), w_count)
+
         for train_num in range(train_iterations):
             print('Старт итерации {}'.format(train_num + 1))
 
@@ -109,7 +111,7 @@ class Network:
                         y[-1].append(func_activate(s[-1][-1]))
 
                 dw = Decimal(0.5) * reduce(add, map(lambda yd: (yd[0] - yd[1]) ** 2, zip(y[-1], di)))
-                # print('Ошибка равна {}\n'.format(dw))
+                # print('Ошибка равна {}'.format(dw))
 
                 y = y[1:]
                 deltas = []
@@ -130,11 +132,11 @@ class Network:
                             for i in range(outs_next):
                                 delta += deltas[0][i] * w[layer_num + 1][j][i]
                             delta *= derivative_func_activate(sk[j])
-                            # print(delta)
+                            print("{:.3f}".format(delta))
                             deltas_new.append(delta)
                         deltas.insert(0, deltas_new)
 
-                    y_last = xi if layer_num == 0 else y[layer_num - 1]
+                    y_last = normalized(xi) if layer_num == 0 else y[layer_num - 1]
                     for i in range(ins):
                         for j in range(outs):
                             delt = -TETTA * deltas[0][j] * y_last[i]
@@ -193,7 +195,7 @@ def main():
 
         net.train(xy, train_iterations)
 
-        with open('nn_trained.json', 'w') as f:
+        with open('nnt.json', 'w') as f:
             json.dump(net.to_json(), f, indent=2)
     else:
         print('Неверный код операции')
