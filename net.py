@@ -8,7 +8,7 @@ from utils import *
 DEFAULT_TRAIN_ITERATIONS = 1
 
 ACTIVATION_ALPHA = Decimal(1)
-TETTA = Decimal(0.5)
+TETTA = Decimal(0.1)
 
 
 def func_activate(x):
@@ -103,10 +103,11 @@ class Network:
                              'Должна быть {}'.format(self.outs))
 
         for train_num in range(train_iterations):
-            print('Старт итерации {}'.format(train_num))
+            print('Старт итерации {}'.format(train_num + 1))
 
             w = self.to_mats()
             for kek, (xi, di) in enumerate(xd):
+                # print('Тренировка на паре {}'.format(kek + 1))
                 s = []
                 y = [xi]
                 for layer_num, wk in enumerate(w):
@@ -114,6 +115,9 @@ class Network:
                     for j in range(len(wk[0])):
                         s[-1].append(reduce(add, map(lambda i: y[-2][i] * wk[i][j], range(len(wk)))))
                         y[-1].append(func_activate(s[-1][-1]))
+
+                dw = 0.5 * reduce(add, map(lambda yd: (yd[0] - yd[1]) ** 2, zip(y[-1], di)))
+                # print('Ошибка равна {}\n'.format(dw))
 
                 y = y[1:]
                 deltas = []
@@ -133,6 +137,8 @@ class Network:
                             outs_next = len(deltas[0])
                             for i in range(outs_next):
                                 delta += deltas[0][i] * w[layer_num + 1][j][i]
+                            delta *= derivative_func_activate(sk[j])
+                            # print(delta)
                             deltas_new.append(delta)
                         deltas.insert(0, deltas_new)
 
@@ -140,7 +146,9 @@ class Network:
                     for i in range(ins):
                         for j in range(outs):
                             delt = -TETTA * deltas[0][j] * y_last[i]
+                            # print(delt)
                             wk[i][j] += delt
+                            wk[i][j] = max(min(100, wk[i][j]), -100)
             self.from_mats(w)
 
     def to_json(self):

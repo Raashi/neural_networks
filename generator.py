@@ -8,8 +8,8 @@ DEFAULT_LAYER_NEURON_COUNT_MAX = 5
 DEFAULT_X_MIN = 1
 DEFAULT_X_MAX = 100
 
-X_MIN = -1000
-X_MAX = 1000
+X_MIN = -1
+X_MAX = 1
 
 
 def get_random():
@@ -31,6 +31,15 @@ def func_1(count):
         xy.append(([0, get_random()], [0]))
     xy.append(([0, 0], [0]))
     random.shuffle(xy)
+    return xy
+
+
+def func_2(count):
+    xy = []
+    for _idx in range(count):
+        x = [random.uniform(0, 10)]
+        y = [1 if x[0] > 5 else -1]
+        xy.append((x, y))
     return xy
 
 
