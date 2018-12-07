@@ -12,7 +12,7 @@ PRINT_DEBUG_FULL = '-vv' in sys.argv
 
 def create_decimal(arg):
     res = Decimal_Orig(arg) * Decimal_Orig(1)
-    return res
+    return float(arg)
 
 
 Decimal_Orig = Decimal

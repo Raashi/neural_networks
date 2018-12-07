@@ -20,10 +20,10 @@ def func_1(count):
     xy = []
     for _idx in range(count):
         x = [get_random(), get_random()]
-        y = [Decimal(0.25) if x[0] > 0 and x[1] > 0 else
+        y = [Decimal(1) if x[0] > 0 and x[1] > 0 else
              Decimal(0.5) if x[0] < 0 < x[1] else
-             Decimal(0.75) if x[0] < 0 and x[1] < 0 else
-             Decimal(1)]
+             Decimal(-0.5) if x[0] < 0 and x[1] < 0 else
+             Decimal(-1)]
         xy.append((x, y))
     for _idx in range(count // 16):
         xy.append(([get_random(), 0], [0]))
@@ -85,7 +85,6 @@ def main():
         with open(filename, 'w') as f:
             for xi, yi in xy:
                 f.write('[{}] -> [{}]\n'.format(arr_str_decimal(xi), arr_str_decimal(yi)))
-
     else:
         gen_net()
 

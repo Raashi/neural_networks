@@ -1,21 +1,28 @@
+import decimal
+from math import exp
 from operator import add
 from functools import reduce
 
 from utils import *
 
-DEFAULT_TRAIN_ITERATIONS = 5
-
+DEFAULT_TRAIN_ITERATIONS = 1
 
 ACTIVATION_ALPHA = Decimal(1)
-TETTA = 0.5
+TETTA = Decimal(0.5)
 
 
 def func_activate(x):
-    return Decimal(2) / (Decimal(1) + (-ACTIVATION_ALPHA * x).exp()) - Decimal(1)
+    if isinstance(x, decimal.Decimal):
+        return Decimal(2) / (Decimal(1) + (-ACTIVATION_ALPHA * x).exp()) - Decimal(1)
+    else:
+        return 2 / (1 + exp(-float(ACTIVATION_ALPHA) * x)) - 1
 
 
 def derivative_func_activate(x):
-    res = Decimal(0.5) * (Decimal(1) + func_activate(x)) * (Decimal(1) - func_activate(x))
+    if isinstance(x, decimal.Decimal):
+        res = Decimal(0.5) * (Decimal(1) + func_activate(x)) * (Decimal(1) - func_activate(x))
+    else:
+        res = 0.5 + (1 * func_activate(x)) * (1 - func_activate(x))
     return res
 
 
@@ -71,6 +78,22 @@ class Network:
         Printer.net_computation_end(x)
         return x
 
+    def to_mats(self):
+        mats = []
+        for layer in self.layers:
+            mat = [[0] * layer.outs for i in range(layer.ins)]
+            for i in range(layer.ins):
+                for j in range(layer.outs):
+                    mat[i][j] = layer.neurons[j].weights[i]
+            mats.append(mat)
+        return mats
+
+    def from_mats(self, mats):
+        for idx, mat in enumerate(mats):
+            for i in range(len(mat)):
+                for j in range(len(mat[0])):
+                    self.layers[idx].neurons[j].weights[i] = mat[i][j]
+
     def train(self, xd, train_iterations):
         if len(xd[0][0]) != self.ins:
             raise ValueError('Неверная размерность входного вектора обучающей выборки. '
@@ -82,33 +105,43 @@ class Network:
         for train_num in range(train_iterations):
             print('Старт итерации {}'.format(train_num))
 
-            for idx, (xi, di) in enumerate(xd):
-                print('Обучение на выборке номер {}'.format(idx + 1))
-                results = [[(0, xii) for xii in xi]] + []
-                for layer in self.layers:
-                    results.append(layer.train(results[-1]))
+            w = self.to_mats()
+            for kek, (xi, di) in enumerate(xd):
+                s = []
+                y = [xi]
+                for layer_num, wk in enumerate(w):
+                    s.append([]), y.append([])
+                    for j in range(len(wk[0])):
+                        s[-1].append(reduce(add, map(lambda i: y[-2][i] * wk[i][j], range(len(wk)))))
+                        y[-1].append(func_activate(s[-1][-1]))
 
-                last_deltas = []
-                for idx in range(len(results) - 1, 0, -1):
-                    layer_res = results[idx]
-                    cur_layer = self.layers[idx - 1]
-                    last_layer = self.layers[idx]
-                    if idx == len(results) - 1:
-                        new_deltas = [(yi - di) * derivative_func_activate(si)
-                                       for di, (si, yi) in zip(di, layer_res)]
+                y = y[1:]
+                deltas = []
+                for layer_num in range(len(w) - 1, -1, -1):
+                    wk = w[layer_num]
+                    yk = y[layer_num]
+                    sk = s[layer_num]
+                    ins = len(wk)
+                    outs = len(wk[0])
+
+                    if layer_num == len(w) - 1:
+                        deltas.insert(0, [(yi - di) * derivative_func_activate(si) for di, si, yi in zip(di, sk, yk)])
                     else:
-                        new_deltas = [0] * cur_layer.outs
-                        for j in range(cur_layer.outs):
+                        deltas_new = []
+                        for j in range(outs):
                             delta = 0
-                            for i in range(last_layer.outs):
-                                delta += last_deltas[i] * last_layer.neurons[i].weights[j]
-                            delta *= derivative_func_activate(layer_res[j][0])
-                            new_deltas.append(delta)
+                            outs_next = len(deltas[0])
+                            for i in range(outs_next):
+                                delta += deltas[0][i] * w[layer_num + 1][j][i]
+                            deltas_new.append(delta)
+                        deltas.insert(0, deltas_new)
 
-                    for i in range(cur_layer.ins):
-                        for j in range(cur_layer.outs):
-                            cur_layer.neurons[j].weights[i] += -TETTA * new_deltas[j] * results[idx - 1][1][i]
-                    last_deltas = new_deltas
+                    y_last = xi if layer_num == 0 else y[layer_num - 1]
+                    for i in range(ins):
+                        for j in range(outs):
+                            delt = -TETTA * deltas[0][j] * y_last[i]
+                            wk[i][j] += delt
+            self.from_mats(w)
 
     def to_json(self):
         obj = {
@@ -126,7 +159,7 @@ class Network:
             for neuron in layer.neurons:
                 layer_obj['neurons'].append({
                     'ins': neuron.ins,
-                    'weights': neuron.weights
+                    'weights': list(map(str, neuron.weights))
                 })
         return obj
 
