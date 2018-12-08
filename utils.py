@@ -1,7 +1,5 @@
 import sys
 import json
-import math
-import decimal
 from operator import add
 from functools import reduce
 
@@ -102,12 +100,14 @@ def parse_txt(filename):
     while idx < len(lines):
         mat = [lines[idx]]
         idx += 1
-        while lines[idx]:
+        while idx < len(lines) and lines[idx]:
             if len(lines[idx]) != len(mat[0]):
                 raise NeuronNetworkParseError('Неверное число элементов матрицы в строке {}'.format(idx + 1))
             mat.append(lines[idx])
             idx += 1
         mats.append(mat)
+        if idx == len(lines):
+            raise NeuronNetworkParseError('Конец файла, но ожидалась следующая строка')
         idx += 1
     return mats
 

@@ -1,6 +1,6 @@
 import sys
 import random
-from utils import Decimal, arr_str_decimal
+from utils import float_arr_str
 
 DEFAULT_LAYER_COUNT = 3
 DEFAULT_LAYER_NEURON_COUNT_MIN = 2
@@ -11,26 +11,29 @@ DEFAULT_X_MAX = 100
 X_MIN = -100
 X_MAX = 100
 
-W_MIN = -3
-W_MAX = 3
+W_MIN = -4
+W_MAX = 4
 
 
 def get_random():
-    return Decimal(random.uniform(X_MIN, X_MAX))
+    return random.uniform(X_MIN, X_MAX)
 
 
 def get_random_weight():
-    return random.randint(W_MIN, W_MAX)
+    res = random.randint(W_MIN, W_MAX)
+    while not res:
+        res = random.randint(W_MIN, W_MAX)
+    return res
 
 
 def func_1(count):
     xy = []
     for _idx in range(count):
         x = [get_random(), get_random()]
-        y = [Decimal(1) if x[0] > 0 and x[1] > 0 else
-             Decimal(0.5) if x[0] < 0 < x[1] else
-             Decimal(-0.5) if x[0] < 0 and x[1] < 0 else
-             Decimal(-1)]
+        y = [1 if x[0] > 0 and x[1] > 0 else
+             0.5 if x[0] < 0 < x[1] else
+             -0.5 if x[0] < 0 and x[1] < 0 else
+             -1]
         xy.append((x, y))
     for _idx in range(count // 16):
         xy.append(([get_random(), 0], [0]))
@@ -44,7 +47,7 @@ def func_1(count):
 def func_2(count):
     xy = []
     for _idx in range(count):
-        x = [random.uniform(0, 10)]
+        x = [random.uniform(-10, 10)]
         y = [1 if x[0] > 5 else -1]
         xy.append((x, y))
     return xy
@@ -92,7 +95,7 @@ def main():
         xy = globals()['func_' + func_name](count)
         with open(filename, 'w') as f:
             for xi, yi in xy:
-                f.write('[{}] -> [{}]\n'.format(arr_str_decimal(xi), arr_str_decimal(yi)))
+                f.write('[{}] -> [{}]\n'.format(float_arr_str(xi), float_arr_str(yi)))
     else:
         gen_net()
 

@@ -3,7 +3,7 @@ from utils import *
 
 DEFAULT_TRAIN_ITERATIONS = 1
 
-ACTIVATION_ALPHA = 5
+ACTIVATION_ALPHA = 2
 TETTA = 0.5
 
 
@@ -110,7 +110,7 @@ class Network:
                         y[-1].append(func_activate(s[-1][-1]))
 
                 dw = 0.5 * reduce(add, map(lambda yd: (yd[0] - yd[1]) ** 2, zip(y[-1], di)))
-                # print('Ошибка равна {}'.format(dw))
+                # print('Ошибка равна {:.3f}'.format(dw))
 
                 y = y[1:]
                 deltas = []
@@ -139,7 +139,7 @@ class Network:
                     for i in range(ins):
                         for j in range(outs):
                             delt = -TETTA * deltas[0][j] * y_last[i]
-                            # print('{:.3f}'.format(delt))
+                            print('{:.3f}'.format(delt))
                             wk[i][j] += delt
                             wk[i][j] = max(min(100, wk[i][j]), -100)
             self.from_mats(w)
@@ -202,3 +202,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    # print("{:.3f}".format(derivative_func_activate(1)))
