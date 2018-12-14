@@ -10,7 +10,7 @@ PRINT_DEBUG_FULL = '-vv' in sys.argv
 
 def normalized(vec):
     d = reduce(add, map(lambda x: x ** 2, vec)) ** 0.5
-    return [vi / d for vi in vec]
+    return [vi / d for vi in vec] if d > 0 else vec[:]
 
 
 def float_str(f):

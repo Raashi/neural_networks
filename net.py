@@ -1,10 +1,11 @@
+import random
 from math import exp
 from utils import *
 
 DEFAULT_TRAIN_ITERATIONS = 1
 
 ACTIVATION_ALPHA = 2
-TETTA = 0.5
+TETTA = 0.1
 
 
 def func_activate(x):
@@ -96,6 +97,7 @@ class Network:
             Printer.train_25_rule(len(xd), w_count)
 
         for train_num in range(train_iterations):
+            random.shuffle(xd)
             print('Старт итерации {}'.format(train_num + 1))
 
             w = self.to_mats()
@@ -110,7 +112,8 @@ class Network:
                         y[-1].append(func_activate(s[-1][-1]))
 
                 dw = 0.5 * reduce(add, map(lambda yd: (yd[0] - yd[1]) ** 2, zip(y[-1], di)))
-                # print('Ошибка равна {:.3f}'.format(dw))
+                if PRINT_DEBUG:
+                    print('Ошибка равна {:.3f}'.format(dw))
 
                 y = y[1:]
                 deltas = []
@@ -139,7 +142,8 @@ class Network:
                     for i in range(ins):
                         for j in range(outs):
                             delt = -TETTA * deltas[0][j] * y_last[i]
-                            print('{:.3f}'.format(delt))
+                            if PRINT_DEBUG_FULL:
+                                print('{:.3f}'.format(delt))
                             wk[i][j] += delt
                             wk[i][j] = max(min(100, wk[i][j]), -100)
             self.from_mats(w)
