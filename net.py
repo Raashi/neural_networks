@@ -97,7 +97,7 @@ class Network:
             Printer.train_25_rule(len(xd), w_count)
 
         for train_num in range(train_iterations):
-            random.shuffle(xd)
+            # random.shuffle(xd)
             print('Старт итерации {}'.format(train_num + 1))
 
             w = self.to_mats()
